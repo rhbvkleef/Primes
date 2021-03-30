@@ -1,4 +1,3 @@
-
 # Python Prime Sieve
 #
 # MyFirstPython Program (tm) Dave Plummer 8/9/2018
@@ -8,12 +7,13 @@
 #
 # Updated 3/22/2021 for Dave's Garage episode comparing C++, C#, and Python
 
-from math import sqrt                       # Used by the sieve
-import time                                 # For timing durations
-from typing import ClassVar, Dict     # For specifying types of variables
-import itertools                            # For chaining iterators
+from math import sqrt  # Used by the sieve
+import time  # For timing durations
+from typing import ClassVar, Dict  # For specifying types of variables
+import itertools  # For chaining iterators
 from numba import njit, b1, int32
 import numpy as np
+from functools import lru_cache
 
 
 class PrimeSieve:
@@ -51,8 +51,9 @@ class PrimeSieve:
         Check whether the number of found primes is correct
         :return: whether or not the number of primes found is correct.
         """
-        if self.sieve_size in self.prime_counts:      # the data, and (b) our count matches. Since it will return
-            return self.prime_counts[self.sieve_size] == self.count_primes() # false for an unknown upper_limit, can't assume false == bad
+        if self.sieve_size in self.prime_counts:  # the data, and (b) our count matches. Since it will return
+            return self.prime_counts[
+                       self.sieve_size] == self.count_primes()  # false for an unknown upper_limit, can't assume false == bad
         return False
 
     def get_bit(self, index):
@@ -63,6 +64,7 @@ class PrimeSieve:
         return self.rawbits[index // 2]
 
     @staticmethod
+    @lru_cache(maxsize=2048)
     @njit(b1[:](int32))
     def sieve(sieve_size):
         factor = 3
@@ -95,8 +97,8 @@ class PrimeSieve:
     def print_results(self, show_results, duration, passes):
         """
         Displays the primes found (or just the total count, depending on what you ask for)
-         
-        :param show_results: Show all primes 
+
+        :param show_results: Show all primes
         :param duration:  The total time execution took
         :param passes:  The amount of passes made
         """
@@ -110,23 +112,26 @@ class PrimeSieve:
                     )
             ))
 
-        print("Passes: " + str(passes) + ", Time: " + str(duration) + ", Avg: " + str(duration/passes) + ", Limit: " + str(self.sieve_size) + ", Count: " + str(self.count_primes()) + ", Valid: " + str(self.validate_results()))
+        print("Passes: " + str(passes) + ", Time: " + str(duration) + ", Avg: " + str(
+            duration / passes) + ", Limit: " + str(self.sieve_size) + ", Count: " + str(
+            self.count_primes()) + ", Valid: " + str(self.validate_results()))
 
 
 # Entrypoint
 if __name__ == '__main__':
-    tStart = time.time()                        # Record our starting time
-    passes = 0                                  # We're going to count how many passes we make in fixed window of time
+    tStart = time.time()  # Record our starting time
+    passes = 0  # We're going to count how many passes we make in fixed window of time
 
-    while time.time() - tStart < 10:            # Run until more than 10 seconds have elapsed
-        sieve = PrimeSieve(1000000)             # Calc the primes up to a million
-        sieve.run_sieve()                       # Find the results
-        passes += 1                             # Count this pass
+    while time.time() - tStart < 10:  # Run until more than 10 seconds have elapsed
+        sieve = PrimeSieve(1000000)  # Calc the primes up to a million
+        sieve.run_sieve()  # Find the results
+        passes += 1  # Count this pass
 
-    tD = time.time() - tStart                   # After the "at least 10 seconds", get the actual elapsed
+    tD = time.time() - tStart  # After the "at least 10 seconds", get the actual elapsed
 
-    sieve.print_results(False, tD, passes)      # Display outcome
-
+    sieve.print_results(False, tD, passes)  # Display outcome
+    
+    
 # Results:
 ###
 # Original:                             56 passes
@@ -136,4 +141,5 @@ if __name__ == '__main__':
 # More efficient division by two:       114 passes
 # Inline clear_bit:                     209 passes
 # Naive JIT:                            2020 passes
+# LRU Caching                           4024627 passes
 # Proper JIT with numpy:                10301 passes
